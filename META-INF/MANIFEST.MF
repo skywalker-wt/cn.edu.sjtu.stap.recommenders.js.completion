@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Completion
+Bundle-SymbolicName: cn.edu.sjtu.stap.recommenders.js.completion;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: cn.edu.sjtu.stap.recommenders.js.completion.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.wst.jsdt.core,
+ org.eclipse.jface.text,
+ org.eclipse.wst.jsdt.ui,
+ org.eclipse.jdt.ui
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: libs/js.jar,
+ .
