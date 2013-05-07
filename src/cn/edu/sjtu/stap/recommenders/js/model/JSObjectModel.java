@@ -1,5 +1,6 @@
 package cn.edu.sjtu.stap.recommenders.js.model;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Set;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EcmaError;
-import org.mozilla.javascript.Function;
+import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.ScriptableObject;
 
 public class JSObjectModel {
@@ -29,13 +30,19 @@ public class JSObjectModel {
 				Object property = jsObject.get(key);
 				if (property == null) continue;
 				if (map.get(property) != null) continue;
-				if (key.equals("each"))
-					System.out.print("");
 				JSObject newObject = JSObject.createJSObject(property, context);					
 				map.put(property, newObject);
-				if (property instanceof ScriptableObject) 
+				
+				if (property instanceof ScriptableObject) {
 					init(map, (ScriptableObject)property, context);
-			} catch (EcmaError e){
+//					Scriptable s;
+//					NativeObject d;
+					if (property instanceof NativeObject 
+							&& ((ScriptableObject)property).getParentScope() instanceof ScriptableObject) {
+						init(map, (ScriptableObject)((ScriptableObject)property).getParentScope(), context);
+					}
+				}
+			} catch (Exception e){
 				System.out.println();
 			}
 		}
@@ -50,11 +57,17 @@ public class JSObjectModel {
 		for (Entry<Object, JSObject> entry : jsObjects.entrySet()) {
 			if (entry.getKey() instanceof ScriptableObject) {
 				ScriptableObject property = (ScriptableObject)entry.getKey();
-				Object[] keys = property.getAllIds();
+				Set keys = new HashSet();
+				Collections.addAll(keys, property.getAllIds());
+				
+				if (entry.getKey() instanceof NativeObject 
+						&& ((NativeObject)entry.getKey()).getPrototype() instanceof ScriptableObject) {
+					Collections.addAll(keys, ((NativeObject)entry.getKey()).getPrototype().getIds());
+				}
 				
 				for (Object key : keys) {
-					if (key.equals("jQuery")) 
-						System.out.println();
+//					if (key.equals("jQuery")) 
+//						System.out.println();
 					try {
 						Object pKey = property.get(key);
 						JSObject pObject = jsObjects.get(pKey);

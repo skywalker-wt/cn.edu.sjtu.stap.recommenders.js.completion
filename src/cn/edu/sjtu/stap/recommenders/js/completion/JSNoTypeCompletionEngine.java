@@ -1,5 +1,6 @@
 package cn.edu.sjtu.stap.recommenders.js.completion;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -31,6 +32,11 @@ import org.eclipse.wst.jsdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.wst.jsdt.internal.compiler.problem.DefaultProblemFactory;
 import org.eclipse.wst.jsdt.internal.compiler.problem.ProblemReporter;
 import org.eclipse.wst.jsdt.ui.text.java.JavaContentAssistInvocationContext;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.tools.shell.Main;
 
 import cn.edu.sjtu.stap.recommenders.js.model.JSArgument;
 import cn.edu.sjtu.stap.recommenders.js.model.JSFunctionObject;
@@ -58,6 +64,7 @@ public class JSNoTypeCompletionEngine {
 		return options;
 	}
 	
+	@SuppressWarnings("restriction")
 	public List<ICompletionProposal> getProposals(final int offset, JavaContentAssistInvocationContext context, IProgressMonitor monitor) {
 		final List<ICompletionProposal> proposals = new LinkedList<ICompletionProposal>();
 		CompilerOptions options = new CompilerOptions(getCompilerOptions());
@@ -178,6 +185,53 @@ public class JSNoTypeCompletionEngine {
 			CompilationUnitDeclaration parsedUnit, 
 			CompilationResult result,
 			int offset) {
+		List<ICompletionProposal> outcome = new ArrayList<ICompletionProposal>();
+
+		outcome.addAll(getProposalForReturn(member, parsedUnit, result, offset));
+		outcome.addAll(getProposalForFields(member, parsedUnit, result, offset));
+			
+		
+		return outcome;
+	}
+	
+	private List<ICompletionProposal> getProposalForReturn(
+			CompletionOnMemberAccess member, 
+			CompilationUnitDeclaration parsedUnit, 
+			CompilationResult result,
+			int offset) {
+		List<ICompletionProposal> outcome = new ArrayList<ICompletionProposal>();
+		
+		try {
+			Set a = model.getJSObjectByProperty("validate");
+			for (Object o : a){
+				o.toString();
+			}
+			Context cx = Context.enter();
+			Scriptable scope = cx.initStandardObjects(Main.getGlobal());
+			Object returnObj = cx.evaluateString(scope, member.getReceiver().toString(), "<complete on return type>", 1, null);
+			if (returnObj instanceof ScriptableObject) {
+				for (Object s : ((ScriptableObject) returnObj).getAllIds())
+					outcome.add(new JSNoTypeFieldProposal(s.toString(), "", offset, s.toString()));
+				
+				if (returnObj instanceof NativeObject) {
+					System.out.print(((Scriptable) returnObj).getPrototype().getIds().length);
+					for (Object s : ((Scriptable) returnObj).getPrototype().getIds()) {
+						outcome.add(new JSNoTypeFieldProposal(s.toString(), "", offset, s.toString()));
+						System.out.println(s);
+					}
+				}
+			}
+		} catch(Exception e) {
+			
+		}
+		return outcome;
+	}
+	
+	private List<ICompletionProposal> getProposalForFields(
+			CompletionOnMemberAccess member, 
+			CompilationUnitDeclaration parsedUnit, 
+			CompilationResult result,
+			int offset) {
 		final String receiver = getReceiverToken(member.getReceiver());;
 		if (receiver == null) return Collections.EMPTY_LIST;
 		//preFilter
@@ -228,8 +282,8 @@ public class JSNoTypeCompletionEngine {
 		if (expression == null) return null;
 		if (expression instanceof IFieldReference) 
 			outcome = new String(((IFieldReference) expression).getToken());
-		else if (expression instanceof IFunctionCall)
-			outcome = new String(((IFunctionCall) expression).getSelector());
+//		else if (expression instanceof IFunctionCall)
+//			outcome = new String(((IFunctionCall) expression).getSelector());
 		else if (expression instanceof SingleNameReference) 
 			outcome = new String(((SingleNameReference) expression).getToken());
 		

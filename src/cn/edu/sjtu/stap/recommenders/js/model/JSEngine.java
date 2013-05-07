@@ -10,6 +10,8 @@ import org.eclipse.wst.jsdt.core.dom.ASTParser;
 import org.eclipse.wst.jsdt.core.dom.JavaScriptUnit;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.NativeObject;
+import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.tools.shell.Global;
 import org.mozilla.javascript.tools.shell.Main;
 
@@ -71,16 +73,36 @@ public class JSEngine {
 		cx.setOptimizationLevel(-1);
 		cx.setLanguageVersion(Context.VERSION_1_5);
 		Global global = Main.getGlobal();
-		
+//		final Global global = new Global(cx);
+//        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+//        final PrintStream p = new PrintStream(out);
+//        global.setOut(p);
+//        global.setErr(p);
+//        global.defineFunctionProperties(
+//                new String[] { "options" }, JSEngine.class,
+//                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
+//                  ScriptableObject.READONLY);
+//		
+//		if (!global.isInitialized())
+//			global.init(cx);
+//		Global global = new Global();
 		if (!global.isInitialized())
 			global.init(cx);
 		
 		try {
 			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\env.js");
+			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\test.js");
 			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery-1.9.1.js");
 			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery-validate.js");
 			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery.lazyload.js");
 			Main.processSource(cx, "W:\\runtime-EclipseApplication\\JSTest\\test.js");
+//			Main.processSource(cx, "Envjs('/W/JS/test/ddd.html')");
+//			int i;
+//			Context cx1 = Context.enter();
+//			Scriptable scope = cx1.initStandardObjects(global);
+//			NativeObject result = (NativeObject)cx.evaluateString(scope, "$('p');", "<cmd>", 1, null);
+//			Object o1 = result.keySet();
+//			Object o2 = result.getPrototype();
 			
 			jsObjectModel = new JSObjectModel();
 			jsObjectModel.init(global, cx);
