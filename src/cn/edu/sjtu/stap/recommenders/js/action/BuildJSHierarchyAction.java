@@ -49,9 +49,9 @@ public class BuildJSHierarchyAction extends AbstractHandler {
 //		} catch (CoreException e) {
 //			e.printStackTrace();
 //		}
-		if (engine == null)
-			engine = JSEngine.getDefault();
-		else engine.initEngine();
+//		if (engine == null)
+//			engine = JSEngine.getDefault();
+//		else engine.initEngine();
 		
 		
 //		Set<String> tSet = new HashSet<String>();

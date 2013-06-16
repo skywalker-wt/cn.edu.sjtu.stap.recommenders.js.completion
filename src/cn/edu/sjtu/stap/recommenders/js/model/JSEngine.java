@@ -1,33 +1,43 @@
 package cn.edu.sjtu.stap.recommenders.js.model;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
-import org.eclipse.wst.jsdt.core.dom.AST;
-import org.eclipse.wst.jsdt.core.dom.ASTParser;
-import org.eclipse.wst.jsdt.core.dom.JavaScriptUnit;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.NativeObject;
 import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.tools.shell.Global;
-import org.mozilla.javascript.tools.shell.Main;
+import org.mozilla.javascript.ScriptableObject;
 
-import cn.edu.sjtu.stap.recommenders.js.build.DomParameterLearner;
-
-//import com.sun.script.javascript.RhinoScriptEngine;
+import cn.edu.sjtu.stap.recommenders.js.build.JSObjectSerializer;
 
 public class JSEngine {	
-	private static JSEngine m_JSEngine = new JSEngine();
-	private JSObjectModel jsObjectModel;
+	public static String DEFAULT_HTML_PATH = "http://www.jquery.com/";
+	public static final String DEFAULT_ENGINE = "DEFAULT_ENGINE";
+	public static final String DEFAULT_SCOPE = "DEFAULT_SCOPE";
+	public static final String GLOBAL_SCOPE = "GLOBAL_SCOPE";
+	public static final String TMP_SCOPE = "TMP_SCOPE";
+	public static final String SUB_SCOPE = "SUB_SCOPE";
+
+	private static Map<String, JSEngine> engines = new TreeMap<String, JSEngine>();
 	
-	public JSEngine(){	}
-	
-	public static JSEngine getDefault() {
-		return m_JSEngine;
+	public static JSEngine getJSEngine(String name) {
+		if (name == null) name = DEFAULT_ENGINE;
+		
+		JSEngine outcome = engines.get(name);
+		if (outcome == null) {
+			outcome = new JSEngine();
+			engines.put(name, outcome);
+		}
+		
+		return outcome;
 	}
+	
+	private JSObjectModel jsObjectModel;
+	private Map<String, Scriptable> scriptables = new HashMap<String, Scriptable>();
+	
+	private JSEngine(){	}
 	
 	public JSObjectModel getJsObjectModel() {
 		return jsObjectModel;
@@ -37,93 +47,99 @@ public class JSEngine {
 		this.jsObjectModel = jsObjectModel;
 	}
 	
-	void evalFile(String[] files) throws IOException {
-		Context context = Context.enter();
-	    Global global = new Global(context);
-	    
-	    for (String file : files) {
-	    	File f = new File(file);
-			BufferedReader reader = new BufferedReader(new FileReader(f));
-//			String tmp = "";
-//			StringBuilder sb = new StringBuilder();
-//			
-//			while ((tmp = reader.readLine()) != null)
-//					sb.append(tmp);
-			
-			context.evaluateReader(global, reader, file, 1, null);
-	    }
-	    
-	    jsObjectModel = new JSObjectModel();
-		jsObjectModel.init(global, context);
+	public void initEngine() throws ClassNotFoundException, IOException {
+		String defaultModelPath = "W:\\JS\\default.jsmodel";
+		initEngine(new File(defaultModelPath));
 	}
-
-	public void initEngine() {
-//		Context cx = ContextFactory.getGlobal().enterContext();
-//		Context context = Context.enter();
-//	    Global global = new Global(context);
-//	    String[] files = new String[]{"W:\\runtime-EclipseApplication\\JSTest\\test.js"};
-//		String[] files = new String[]{"W:\\JS\\tools\\rhino1_7R4\\env.js"};
-//	    try {
-//			evalFile(files);
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		Context cx = ContextFactory.getGlobal().enterContext();
-		cx.setOptimizationLevel(-1);
-		cx.setLanguageVersion(Context.VERSION_1_5);
-		Global global = Main.getGlobal();
-//		final Global global = new Global(cx);
-//        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-//        final PrintStream p = new PrintStream(out);
-//        global.setOut(p);
-//        global.setErr(p);
-//        global.defineFunctionProperties(
-//                new String[] { "options" }, JSEngine.class,
-//                ScriptableObject.DONTENUM | ScriptableObject.PERMANENT |
-//                  ScriptableObject.READONLY);
-//		
-//		if (!global.isInitialized())
-//			global.init(cx);
-//		Global global = new Global();
-		if (!global.isInitialized())
-			global.init(cx);
+	
+	public void initEngine(final File modelFile) throws ClassNotFoundException, IOException {
+		FileInputStream modelInputStream = new FileInputStream(modelFile);
+		initEngine(modelInputStream);
+	}
+	
+	public void initEngine(final FileInputStream modelFileInputStream) throws ClassNotFoundException, IOException {
+		this.jsObjectModel = JSObjectSerializer.deSerialize(modelFileInputStream);
+		scriptables.put(GLOBAL_SCOPE, jsObjectModel.getGlobal());
+	}
+	
+	public void bindRelatedHtmlFile(String htmlPath){
+		if (htmlPath == null)
+			htmlPath = DEFAULT_HTML_PATH;
 		
-		try {
-			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\env.js");
-			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\test.js");
-			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery-1.9.1.js");
-			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery-validate.js");
-			Main.processSource(cx, "W:\\JS\\tools\\rhino1_7R4\\jquery.lazyload.js");
-			Main.processSource(cx, "W:\\runtime-EclipseApplication\\JSTest\\test.js");
-//			Main.processSource(cx, "Envjs('/W/JS/test/ddd.html')");
-//			int i;
-//			Context cx1 = Context.enter();
-//			Scriptable scope = cx1.initStandardObjects(global);
-//			NativeObject result = (NativeObject)cx.evaluateString(scope, "$('p');", "<cmd>", 1, null);
-//			Object o1 = result.keySet();
-//			Object o2 = result.getPrototype();
-			
-			jsObjectModel = new JSObjectModel();
-			jsObjectModel.init(global, cx);
-			Object o = jsObjectModel.getJSObjectByName("fn");
-			learnFromFile("W:\\runtime-EclipseApplication\\JSTest\\example.js");
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		if (!htmlPath.equals(getCurrentURL())) {
+			executeInGlobal("Envjs('" + htmlPath + "')", 1);
 		}
 	}
 	
-	private void learnFromFile(String file) throws IOException {
-		ASTParser parser = ASTParser.newParser(AST.JLS3); 
-		File f = new File(file);
-		BufferedReader reader = new BufferedReader(new FileReader(f));
-		String tmp = "";
-		StringBuilder sb = new StringBuilder();
-		while ((tmp = reader.readLine()) != null)
-			sb.append(tmp);
-		parser.setSource(sb.toString().toCharArray());
-		JavaScriptUnit result = (JavaScriptUnit) parser.createAST(null);
-		result.accept(new DomParameterLearner(jsObjectModel));
-		reader.close();
+	public String getCurrentURL() {
+		Object result = evaluateScript("window.location.href");
+		
+		if (result != null && result instanceof String)
+			return (String)result;
+		
+		return null;
+	}
+	
+	public Scriptable execute(final String script, final int lineNumber) {
+		return execute(script, lineNumber, DEFAULT_SCOPE);
+	}
+	
+	public Scriptable executeInGlobal(final String script, final int lineNumber) {
+		return execute(script, lineNumber, GLOBAL_SCOPE);
+	}
+	
+	public Scriptable execute(final String script, final int lineNumber, final String scopeName) {
+		Scriptable executeScope = scriptables.get(scopeName);
+		if (executeScope == null) {
+			executeScope = new ScriptableObject() {
+				@Override
+				public String getClassName() {
+					return scopeName;
+				}
+			};
+			executeScope.setParentScope(jsObjectModel.getGlobal());
+			scriptables.put(scopeName, executeScope);
+		}
+		
+		jsObjectModel.getContext().evaluateString(executeScope, script, null, lineNumber, null);
+		return executeScope;
+	}
+	
+	public Scriptable execute(final String script, final int lineNumber, final Scriptable parentScope) {
+		Scriptable executeScope = new ScriptableObject() {
+				@Override
+				public String getClassName() {
+					return SUB_SCOPE + parentScope.getClassName();
+				}
+			};
+		executeScope.setParentScope(parentScope);
+		
+		jsObjectModel.getContext().evaluateString(executeScope, script, null, lineNumber, null);
+		return executeScope;
+	}
+	
+	public Scriptable execute(final String script, final Scriptable scope) {
+		jsObjectModel.getContext().evaluateString(scope, script, null, 1, null);
+		return scope;
+	}
+	
+	public Object evaluateScript(final String script) {
+		return evaluateScript(script, jsObjectModel.getGlobal(), TMP_SCOPE);
+	}
+	
+	public Object evaluateScript(final String script, final Scriptable parentScope) {
+		return evaluateScript(script, parentScope, TMP_SCOPE);
+	}
+	
+	public Object evaluateScript(final String script, final Scriptable parentScope, final String scopeName) {
+		Scriptable executeScope = new ScriptableObject() {
+			@Override
+			public String getClassName() {
+				return scopeName;
+			}
+		};
+		executeScope.setParentScope(parentScope);
+		
+		return jsObjectModel.getContext().evaluateString(executeScope, script, null, 1, null);
 	}
 }

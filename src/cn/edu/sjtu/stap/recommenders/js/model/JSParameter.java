@@ -1,8 +1,9 @@
 package cn.edu.sjtu.stap.recommenders.js.model;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class JSParameter{
+public class JSParameter  implements Serializable{
 	private JSObject jsObject;
 	private int index;
 	private String name;

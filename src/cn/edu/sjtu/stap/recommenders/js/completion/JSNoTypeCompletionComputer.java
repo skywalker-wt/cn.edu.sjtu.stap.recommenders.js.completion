@@ -1,5 +1,6 @@
 package cn.edu.sjtu.stap.recommenders.js.completion;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,17 +23,20 @@ public class JSNoTypeCompletionComputer implements
 
 	@Override
 	public List computeCompletionProposals(
-			ContentAssistInvocationContext context, IProgressMonitor monitor) {
+			ContentAssistInvocationContext context, 
+			IProgressMonitor monitor) {
 		if (context instanceof JavaContentAssistInvocationContext) {
 			JavaContentAssistInvocationContext javaContext= (JavaContentAssistInvocationContext) context;
-			JSObjectModel model = JSEngine.getDefault().getJsObjectModel();
-			if (model == null) {
-				JSEngine.getDefault().initEngine();
-				model = JSEngine.getDefault().getJsObjectModel();
+			
+			try {
+				JSEngine jsExecuteEngine = getJSEngine(javaContext);
+				JSNoTypeCompletionEngine completionEngine = new JSNoTypeCompletionEngine(jsExecuteEngine);
+				return completionEngine.getProposals(context.getInvocationOffset(), javaContext, monitor);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-				
-			JSNoTypeCompletionEngine completionEngine = new JSNoTypeCompletionEngine(model);
-			return completionEngine.getProposals(context.getInvocationOffset(), javaContext, monitor);
 		}
 		
 		return Collections.EMPTY_LIST;
@@ -56,5 +60,13 @@ public class JSNoTypeCompletionComputer implements
 		// TODO Auto-generated method stub
 
 	}
-
+	
+	private JSEngine getJSEngine(JavaContentAssistInvocationContext context) throws ClassNotFoundException, IOException {
+		// TODO Choose the related Engine. Now just use default engine.
+		JSEngine outcome = JSEngine.getJSEngine(null);
+		if (outcome.getJsObjectModel() == null)
+			outcome.initEngine();
+		
+		return outcome;
+	}
 }

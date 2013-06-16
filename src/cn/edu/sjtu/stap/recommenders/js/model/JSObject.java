@@ -1,5 +1,6 @@
 package cn.edu.sjtu.stap.recommenders.js.model;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -17,7 +18,7 @@ import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.ScriptableObject;
 
-public class JSObject {
+public class JSObject implements Serializable{
 	public final static int NULL_TYPE = 0;
 	public final static int FUNCTION_TYPE = 1;
 	public final static int OBJECT_LITERAL_TYPE = 2;

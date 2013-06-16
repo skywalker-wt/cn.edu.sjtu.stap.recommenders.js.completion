@@ -27,14 +27,14 @@ public class SampleHandler extends AbstractHandler {
 	 * from the application context.
 	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		engine = new JSEngine();
-		engine.initEngine();
-		
-		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
-		MessageDialog.openInformation(
-				window.getShell(),
-				"Completion",
-				"Hello, Eclipse world");
+//		engine = new JSEngine();
+//		engine.initEngine();
+//		
+//		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
+//		MessageDialog.openInformation(
+//				window.getShell(),
+//				"Completion",
+//				"Hello, Eclipse world");
 		return null;
 	}
 }

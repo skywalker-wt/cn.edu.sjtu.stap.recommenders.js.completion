@@ -66,6 +66,7 @@ public class DomParameterLearner extends ASTVisitor{
 						name = "{ }";
 						break;
 					}
+					
 					argument.setName(name);
 					parameters.add(argument);
 				}

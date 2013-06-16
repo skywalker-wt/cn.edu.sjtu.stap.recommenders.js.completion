@@ -10,13 +10,15 @@
 	         categoryId="org.eclipse.ui.texteditor.textual_proposals"
 	         class="cn.edu.sjtu.stap.recommenders.js.completion.JSNoTypeCompletionComputer">
 	    
-	    	<partition type="__dftl_partition_content_type"/>
+	  <partition type="__dftl_partition_content_type"/>
       <partition
             type="__java_string">
       </partition>
       <partition
             type="__java_character">
       </partition>
+      <partition type="__java_singleline_comment"/> <!-- to get NLS templates -->
+	  <partition type="__java_javadoc"/>
 	   </javaCompletionProposalComputer>
 	 </extension>
  <extension

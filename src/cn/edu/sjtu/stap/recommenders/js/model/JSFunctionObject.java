@@ -2,7 +2,6 @@ package cn.edu.sjtu.stap.recommenders.js.model;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -13,6 +12,8 @@ import org.eclipse.wst.jsdt.core.dom.ASTParser;
 import org.eclipse.wst.jsdt.core.dom.JavaScriptUnit;
 import org.mozilla.javascript.BaseFunction;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ast.AstNode;
 
 import cn.edu.sjtu.stap.recommenders.js.build.DomParameterExtractor;
 import cn.edu.sjtu.stap.recommenders.js.build.DomVariableExtractor;
@@ -50,7 +51,14 @@ public class JSFunctionObject extends JSObject {
 					
 					ASTParser parser =ASTParser.newParser(AST.JLS3);  
 					parser.setSource(function.toCharArray());
-					JavaScriptUnit result = (JavaScriptUnit) parser.createAST(null);
+				
+					JavaScriptUnit result = null;
+					try {
+						result = (JavaScriptUnit) parser.createAST(null);
+					}
+					catch (Exception e) {
+						return;
+					}
 					
 					DomParameterExtractor parameterExtractor = new DomParameterExtractor();
 					result.accept(parameterExtractor);
